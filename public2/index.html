@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" type="text/javascript"></script>
-    <title>App A</title>
+    <title>App B</title>
     <style>
         #rectangleArea {
             background: yellow;
@@ -37,14 +37,14 @@
         .dot {
             width: 2px;
             height: 2px;
-            background-color: black;
+            background-color: yellow;
             position: absolute;
         }
     </style>
 </head>
 
 <body>
-    <div id="rectangleArea" onmouseenter="cursorEntry(event)" onmousemove="handleMouseMove(event)" onmouseleave="cursorLeave(event)">
+    <div id="rectangleArea">
 
     </div>
 
@@ -54,7 +54,23 @@
     <script>
         // document.onmousemove = handleMouseMove;
         var socket;
-        socket = io.connect('http://localhost:3000/')
+        // scoket = io.connect('http://localhost:3000')
+        // socket.on('mouse', newDarwing)
+
+        // function newDarwing(data) {
+        //     console.log(data.x, data.y)
+        // }
+        socket = io.connect('http://localhost:3000', {
+            "force new connection": true
+        });
+
+        socket.on('connect', function() {
+            console.log('connected to localhost:3000');
+            socket.on('mouse', function(data) {
+                console.log('message from the server:', data);
+                socket.emit('serverEvent', "thanks server! for sending '" + data + "'");
+            });
+        });
 
         function cursorEntry(event) {
             console.log("in the div");
@@ -70,7 +86,7 @@
         }
 
         function log(event) {
-            text.value += event.type + ' [target: ' + event.target.id + ']' + " " + event.pageX + " " + event.pageY + '\n';
+            text.value += event.type + ' [target: ' + event.target.id + ']\n';
             text.scrollTop = text.scrollHeight;
         }
 
@@ -97,11 +113,6 @@
             //         (doc && doc.clientTop || body && body.clientTop || 0);
             // }
             console.log(event, event.pageX, event.pageY, event.clientX, event.clientY)
-            var data = {
-                x: event.pageX,
-                y: event.pageY
-            }
-            socket.emit('mouse', data)
             log(event)
                 // Add a dot to follow the cursor
             dot = document.createElement('div');
