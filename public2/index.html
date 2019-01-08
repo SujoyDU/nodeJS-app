@@ -40,13 +40,36 @@
             background-color: yellow;
             position: absolute;
         }
+        
+        .rectangle {
+            border: 3px solid #73AD21
+        }
     </style>
 </head>
 
 <body>
-    <div id="rectangleArea">
-
+    <div id="relativeRect" class="rectangle">
+        this is a div
     </div>
+    <script>
+        var styles = `position: relative;
+                      width: 500px;
+                      height: 500px;`
+        document.getElementById("relativeRect").style = styles
+
+        // rectElement = document.createElement('div');
+        // rectElement.className = "rectangle";
+        // rectElement.style.position = 'absolute';
+        // rectElement.style.top = 80 + "px";
+        // rectElement.style.left = 90 + "px";
+        // rectElement.style.width = 200 + "px";
+        // rectElement.style.height = 100 + "px";
+        // document.getElementById("relativeRect").appendChild(rectElement);
+    </script>
+
+
+    <!-- <div class="absolute1" position="absolute" top="80px" left="90px" width="200px" height="100px">absolute1</div> -->
+    <!-- <div class="absolute2" position="absolute" top="180px" left="290px" width="200px" height="100px">absolute2</div> -->
 
     <textarea id="text"></textarea>
     <input type="button" onclick="text.value=''" value="Clear">
@@ -71,6 +94,95 @@
                 // socket.emit('serverEvent', "thanks server! for sending '" + data + "'");
             });
         });
+
+        function getRandomColor() {
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += (Math.random() * 16 | 0).toString(16);
+            }
+            return color;
+        }
+
+        function Point(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function Rectangle(p1, p2) {
+            this.p1 = p1;
+            this.p2 = p2;
+        }
+
+        Rectangle.prototype.isInside = function(r) {
+            function check(a, b) {
+                return (
+                    a.p1.x <= b.p1.x && b.p1.x <= a.p2.x && a.p1.y <= b.p1.y && b.p1.y <= a.p2.y ||
+                    a.p1.x <= b.p2.x && b.p2.x <= a.p2.x && a.p1.y <= b.p2.y && b.p2.y <= a.p2.y ||
+                    a.p1.x <= b.p2.x && b.p2.x <= a.p2.x && a.p1.y <= b.p1.y && b.p1.y <= a.p2.y ||
+                    a.p1.x <= b.p1.x && b.p1.x <= a.p2.x && a.p1.y <= b.p2.y && b.p2.y <= a.p2.y
+                );
+            }
+            return check(this, r) || check(r, this);
+        }
+
+        function generateRectangles() {
+            function p() {
+                return Math.random() * 500 | 0;
+            }
+
+            function s() {
+                return Math.random() * 200 | 0;
+            }
+
+            var rectangles = [],
+                r, size, x, y, isInside, i, counter = 0;
+
+            for (i = 0; i < 10; i++) {
+                counter = 0;
+                do {
+                    counter++;
+                    x = p();
+                    y = p();
+                    size = s();
+                    //ySize = s();
+                    if (x + size < 500 && y + size < 500) {
+                        r = new Rectangle(new Point(x, y), new Point(x + size, y + size));
+                        isInside = rectangles.some(function(a) {
+                            return a.isInside(r);
+                        });
+                    }
+                } while (isInside && counter < 1000);
+                counter < 1000 && rectangles.push(r);
+            }
+            return rectangles;
+        }
+
+        function drawRectangles(rectangles) {
+            // var canvas = document.getElementById("canvas"),
+            //     ctx = canvas.getContext("2d");
+
+            rectangles.forEach(function(a) {
+                rectElement = document.createElement('div');
+                rectElement.className = "rectangle";
+                rectElement.style.position = 'absolute';
+                rectElement.style.top = a.p1.x + 0.5 + "px";
+                rectElement.style.left = a.p1.y + 0.5 + "px";
+                rectElement.style.width = a.p2.x - a.p1.x - 1 + "px";
+                rectElement.style.height = a.p2.y - a.p1.y - 1 + "px";
+                document.getElementById("relativeRect").appendChild(rectElement);
+
+                // ctx.lineWidth = 1;
+                // ctx.strokeRect(a.p1.x + 0.5, a.p1.y + 0.5, a.p2.x - a.p1.x - 1, a.p2.y - a.p1.y - 1);
+                // ctx.fillStyle = getRandomColor();
+                // ctx.fillRect(a.p1.x + 0.5, a.p1.y + 0.5, a.p2.x - a.p1.x - 1, a.p2.y - a.p1.y - 1);
+            });
+        }
+        var rectangles = generateRectangles();
+        drawRectangles(rectangles);
+
+
+
+
 
         function cursorEntry(event) {
             console.log("in the div");
