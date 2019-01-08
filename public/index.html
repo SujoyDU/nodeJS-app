@@ -52,16 +52,40 @@
     <input type="button" onclick="text.value=''" value="Clear">
 
     <script>
-        // document.onmousemove = handleMouseMove;
+        // document.onmousemove = handleMouseMove;  
         var socket;
         socket = io.connect('http://localhost:3000/')
+
+
+
+        var handleNextKeypress = true;
+        var X = 0.1;
+
+        function setHandleNextKeypressTrue() {
+            handleNextKeypress = true;
+        }
+
+        function setHandleNextKeypressTrueAfterDelay(delay) {
+            setTimeout(setHandleNextKeypressTrue, delay);
+        }
+
+        // $("#inputField").on("keypress", function(event) {
+        //     if (handleNextKeypress) {
+        //         $("div#output").append("key pressed <br/>");
+        //         handleNextKeypress = false;
+        //         setHandleNextKeypressTrueAfterDelay(X * 1000);
+        //     }
+        // });
+
+        // $("#clear").on("click", function(event) {
+        //     $("div#output").html("");
+        // });
+
+
 
         function cursorEntry(event) {
             console.log("in the div");
             console.log(event.x, event.y)
-
-            handleMouseMove(event)
-
         }
 
         function cursorLeave(event) {
@@ -96,20 +120,60 @@
             //         (doc && doc.scrollTop || body && body.scrollTop || 0) -
             //         (doc && doc.clientTop || body && body.clientTop || 0);
             // }
-            console.log(event, event.pageX, event.pageY, event.clientX, event.clientY)
-            var data = {
-                x: event.pageX,
-                y: event.pageY
-            }
-            socket.emit('mouse', data)
-            log(event)
-                // Add a dot to follow the cursor
-            dot = document.createElement('div');
-            dot.className = "dot";
-            dot.style.left = event.pageX + "px";
-            dot.style.top = event.pageY + "px";
+            // console.log(event, event.pageX, event.pageY, event.clientX, event.clientY)
+            // var data = {
+            //     x: event.pageX,
+            //     y: event.pageY
+            // }
+            var data;
+            var date = new Date();
+            if (handleNextKeypress) {
+                console.log('mouse moved')
+                console.log(event, event.pageX, event.pageY, event.clientX, event.clientY)
+                data = {
+                    x: event.pageX,
+                    y: event.pageY,
+                    time: Date.now()
+                }
+                socket.emit('mouse', data)
+                log(event)
+                    // Add a dot to follow the cursor
+                dot = document.createElement('div');
+                dot.className = "dot";
+                dot.style.left = data.x + "px";
+                dot.style.top = data.y + "px";
 
-            document.getElementById("rectangleArea").appendChild(dot);
+                document.getElementById("rectangleArea").appendChild(dot);
+
+
+                handleNextKeypress = false;
+                setHandleNextKeypressTrueAfterDelay(X * 1000);
+            }
+            // setTimeout(function() {
+
+            //     socket.emit('mouse', data)
+            //     log(event)
+            //         // Add a dot to follow the cursor
+            //     dot = document.createElement('div');
+            //     dot.className = "dot";
+            //     dot.style.left = data.x + "px";
+            //     dot.style.top = data.y + "px";
+
+            //     document.getElementById("rectangleArea").appendChild(dot);
+
+            //     // socket.emit('clientEvent', Math.random());
+            //     // handleMouseMove(event)
+            //     // console.log('message sent to the clients');
+            // }, 2000);
+            // socket.emit('mouse', data)
+            // log(event)
+            //     // Add a dot to follow the cursor
+            // dot = document.createElement('div');
+            // dot.className = "dot";
+            // dot.style.left = event.pageX + "px";
+            // dot.style.top = event.pageY + "px";
+
+            // document.getElementById("rectangleArea").appendChild(dot);
 
         }
     </script>
