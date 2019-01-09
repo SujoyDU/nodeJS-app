@@ -18,6 +18,12 @@
             width: 400px;
         }
         
+        #textPoint {
+            display: block;
+            height: 100px;
+            width: 400px;
+        }
+        
         .dot {
             width: 4px;
             height: 4px;
@@ -41,19 +47,34 @@
         document.getElementById("relativeRect").style = styles
     </script>
 
-    <textarea id="text"></textarea>
-    <input type="button" onclick="text.value=''" value="Clear">
+    <div id="realMouseMovementInfo">
+        Display Mouse Cursor Info on the rectangles
+        <textarea id="text"></textarea>
+        <input type="button" onclick="text.value=''" value="Clear">
+
+    </div>
+
+    <div id="speendInfo">
+        Show Mouse Movement Info
+        <textarea id="textPoint"></textarea>
+        <input type="button" onclick="textPoint.value=''" value="Clear">
+    </div>
+
+    <div id="replayButton">
+        <input type="button" onclick="buttonClicked()" value="Replay">
+    </div>
 
     <script>
-        //to color the random rectangles 
+        //to color the random rectangles which I intended to use for indicating if a point is inside or not
         function getRandomColor() {
             var color = '#';
-            for (var i = 0; i < 6; i++) {
+            for (var i = 0; i < 10; i++) {
                 color += (Math.random() * 16 | 0).toString(16);
             }
             return color;
         }
 
+        //point of a rectangle
         function Point(x, y) {
             this.x = x;
             this.y = y;
@@ -88,7 +109,7 @@
             return check(this, r) || check(r, this);
         }
 
-        //generate random rectangle in the 500* 500 pixel area
+        //generate random non-overlapping rectangle in the 500*500 pixel area
         function generateRectangles() {
 
             function p() {
@@ -141,11 +162,6 @@
         //console.log(rectangles.length)
 
         drawRectangles(rectangles);
-
-        // function displayMessage(event) {
-        //     console.log(event)
-        // }
-
         // function cursorEntry(event) {
         //     console.log("in the div");
         //     console.log(event.x, event.y)
@@ -163,6 +179,7 @@
             text.value += event.type + ' [target: ' + event.target.id + ']\n';
             text.scrollTop = text.scrollHeight;
         }
+
         var socket;
         //for keeping track of data received from server
         var dataArray = [];
@@ -191,7 +208,8 @@
             lastSpeed = speed
             sumOfSpeed += speed;
             avgSpeed = sumOfSpeed / (dataArray.length - 1)
-            console.log("Current Speed " + speed + " Average Speed " + avgSpeed);
+            document.getElementById('textPoint').value += "Current Speed " + speed + " Average Speed " + avgSpeed + '\n';
+            // console.log("Current Speed " + speed + " Average Speed " + avgSpeed);
 
         }
 
@@ -221,6 +239,42 @@
 
             }
 
+        }
+
+        function drawDots(data) {
+            setTimeout(function() {
+                replay = document.getElementById("textPoint");
+                replay.value += data.x + ' ' + data.y + '\n';
+            }, 1000)
+        }
+
+
+        var delayTime = 2;
+        var MouseMoveDelay = true;
+
+        function setDelay(i, a) {
+            setTimeout(function() {
+                dot = document.createElement('div');
+                dot.className = "dot";
+                dot.style.left = a.x + "px";
+                dot.style.top = a.y + "px";
+                document.getElementById("relativeRect").appendChild(dot);
+            }, i * 10);
+        }
+
+        function buttonClicked(event) {
+            replay = document.getElementById("textPoint");
+            replay.value += 'pressed\n';
+            var i = 0;
+            elementClass = document.getElementsByClassName('dot')
+            while (elementClass.length > 0) {
+                elementClass[i].remove()
+            }
+            count = 0;
+            for (i = 0; i < dataArray.length; ++i) {
+                var a = dataArray[i]
+                setDelay(i, a);
+            }
         }
     </script>
 </body>
