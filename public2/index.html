@@ -35,12 +35,12 @@
         }
         
         .dot {
-            width: 2px;
-            height: 2px;
-            background-color: yellow;
+            width: 4px;
+            height: 4px;
+            background-color: darkred;
             position: absolute;
         }
-        
+
         .rectangle {
             border: 3px solid #73AD21
         }
@@ -48,7 +48,7 @@
 </head>
 
 <body>
-    <div id="relativeRect" class="rectangle">
+    <div id="relativeRect" class="rectangle" onmousemove="log(event)">
     </div>
     <script>
         var styles = `position: relative;
@@ -74,26 +74,6 @@
     <input type="button" onclick="text.value=''" value="Clear">
 
     <script>
-        // document.onmousemove = handleMouseMove;
-        var socket;
-        // scoket = io.connect('http://localhost:3000')
-        // socket.on('mouse', newDarwing)
-
-        // function newDarwing(data) {
-        //     console.log(data.x, data.y)
-        // }
-        socket = io.connect('http://localhost:3000', {
-            "force new connection": true
-        });
-
-        socket.on('connect', function() {
-            console.log('connected to localhost:3000');
-            socket.on('mouse', function(data) {
-                console.log('message from the server:', data);
-                // socket.emit('serverEvent', "thanks server! for sending '" + data + "'");
-            });
-        });
-
         function getRandomColor() {
             var color = '#';
             for (var i = 0; i < 6; i++) {
@@ -110,6 +90,11 @@
         function Rectangle(p1, p2) {
             this.p1 = p1;
             this.p2 = p2;
+
+            this.contains = function (x, y) {
+                return this.p1.x < x && x < this.p2.x &&
+                this.p1.y < y && y < this.p2.y;
+            }
         }
 
         Rectangle.prototype.isInside = function(r) {
@@ -152,26 +137,29 @@
             }
             return rectangles;
         }
+//        function logA(event){
+//            text.value +='child '+ event.type + ' [target: ' + event.target.id + ']\n';
+//            text.scrollTop = text.scrollHeight;
+//        }
 
         function drawRectangles(rectangles) {
             // var canvas = document.getElementById("canvas"),
             //     ctx = canvas.getContext("2d");
 
-            rectangles.forEach(function(a) {
+            rectangles.forEach(function(a, index) {
                 rectElement = document.createElement('div');
                 rectElement.className = "rectangle";
+                rectElement.id = "rectangle"+index;
                 rectElement.style.position = 'absolute';
                 rectElement.style.top = a.p1.x + 0.5 + "px";
                 rectElement.style.left = a.p1.y + 0.5 + "px";
                 rectElement.style.width = a.p2.x-a.p1.x + "px";
                 rectElement.style.height = a.p2.y-a.p1.y + "px";
+                //document.getElementById(rectElement.id).addEventListener("mousemove", logA);
+                //document.getElementById(rectElement.id).addEventListener("onmousemove", logA);
                 document.getElementById("relativeRect").appendChild(rectElement);
 
-                // ctx.lineWidth = 1;
-                // ctx.strokeRect(a.p1.x + 0.5, a.p1.y + 0.5, a.p2.x - a.p1.x - 1, a.p2.y - a.p1.y - 1);
-                // ctx.fillStyle = getRandomColor();
-                // ctx.fillRect(a.p1.x + 0.5, a.p1.y + 0.5, a.p2.x - a.p1.x - 1, a.p2.y - a.p1.y - 1);
-            });
+            })
         }
         var rectangles = generateRectangles();
         console.log(rectangles.length)
@@ -180,7 +168,9 @@
 
 
 
-
+        function displayMessage(event) {
+            console.log(event)
+        }
         function cursorEntry(event) {
             console.log("in the div");
             console.log(event.x, event.y)
@@ -198,6 +188,10 @@
             text.value += event.type + ' [target: ' + event.target.id + ']\n';
             text.scrollTop = text.scrollHeight;
         }
+//        function logA(event){
+//            text.value +='child '+ event.type + ' [target: ' + event.target.id + ']\n';
+//            text.scrollTop = text.scrollHeight;
+//        }
 
         function handleMouseMove(event) {
 
@@ -232,6 +226,45 @@
             document.getElementById("rectangleArea").appendChild(dot);
 
         }
+
+
+         // document.onmousemove = handleMouseMove;
+        var socket;
+        // scoket = io.connect('http://localhost:3000')
+        // socket.on('mouse', newDarwing)
+
+        // function newDarwing(data) {
+        //     console.log(data.x, data.y)
+        // }
+        socket = io.connect('http://localhost:3000');
+
+        socket.on('connect', function() {
+            console.log('connected to localhost:3000');
+            socket.on('mouse', simulateMouseMove);
+        });
+
+        function simulateMouseMove(data){
+             console.log('message from the server:', data);
+             dot = document.createElement('div');
+             dot.className = "dot";
+             dot.style.left = data.x + "px";
+             dot.style.top = data.y + "px";
+
+             document.getElementById("relativeRect").appendChild(dot);
+             e =new Event('m');
+
+            // set coordinates
+            e.pageX = data.x;
+            e.pageY = data.y;
+            document.getElementById("relativeRect").dispatchEvent(e);
+//            document.getElementById("rectangle0").dispatchEvent(e)
+
+            // trigger event - must trigger on document
+//            $(document).trigger(e);
+
+        }
+
+
     </script>
 </body>
 
