@@ -6,27 +6,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" type="text/javascript"></script>
     <title>App B</title>
     <style>
-        #rectangleArea {
-            background: yellow;
-            width: 500px;
-            height: 500px;
-        }
-        
         #text {
             display: block;
             height: 100px;
-            width: 400px;
+            width: 500px;
         }
         
         #textPoint {
             display: block;
             height: 100px;
-            width: 400px;
+            width: 500px;
         }
         
         .dot {
-            width: 4px;
-            height: 4px;
+            width: 3px;
+            height: 3px;
             background-color: darkred;
             position: absolute;
         }
@@ -61,14 +55,14 @@
     </div>
 
     <div id="replayButton">
-        <input type="button" onclick="buttonClicked()" value="Replay">
+        <input type="button" onclick="replayButtonClicked()" value="Replay">
     </div>
 
     <script>
-        //to color the random rectangles which I intended to use for indicating if a point is inside or not
+        //This method is to color the random rectangles which I intended to use for indicating if a point is inside or not
         function getRandomColor() {
             var color = '#';
-            for (var i = 0; i < 10; i++) {
+            for (var i = 0; i < 6; i++) {
                 color += (Math.random() * 16 | 0).toString(16);
             }
             return color;
@@ -152,65 +146,18 @@
                 rectElement.style.width = a.p2.x - a.p1.x + "px";
                 rectElement.style.height = a.p2.y - a.p1.y + "px";
 
+                //set a random color for rectangle
+                //rectElement.style.backgroundColor = getRandomColor();
+
                 //adding new rectangle to the overall 500*500 pixel area
                 document.getElementById("relativeRect").appendChild(rectElement);
 
             })
         }
-        var rectangles = generateRectangles();
-        //check rectangles lengh
-        //console.log(rectangles.length)
-
-        drawRectangles(rectangles);
-        // function cursorEntry(event) {
-        //     console.log("in the div");
-        //     console.log(event.x, event.y)
-
-        //     handleMouseMove(event)
-
-        // }
-
-        // function cursorLeave(event) {
-        //     console.log("out of the div");
-        //     console.log(event.x, event.y)
-        // }
 
         function log(event) {
             text.value += event.type + ' [target: ' + event.target.id + ']\n';
             text.scrollTop = text.scrollHeight;
-        }
-
-        var socket;
-        //for keeping track of data received from server
-        var dataArray = [];
-        var avgSpeed = 0;
-        var lastSpeed = 0;
-        var sumOfSpeed = 0;
-
-        socket = io.connect('http://localhost:3000');
-
-        //connection to server and reveiving mouse movement data
-        socket.on('connect', function() {
-            console.log('connected to localhost:3000');
-            socket.on('mouseMovePoint', simulateMouseMove);
-        });
-
-        //calculates speed of the mouse travel
-        function calculateSpeed(secondPosition, firstPosition) {
-            xDistance = (Math.pow(firstPosition.x - secondPosition.x), 2);
-            yDistance = (Math.pow(firstPosition.y - secondPosition.y), 2);
-            distance = Math.sqrt(xDistance + yDistance);
-            timeDifference = (secondPosition.time - firstPosition.time) / 1000;
-            if (timeDifference == 0) {
-                timeDifference = lastSpeed;
-            }
-            speed = distance / timeDifference;
-            lastSpeed = speed
-            sumOfSpeed += speed;
-            avgSpeed = sumOfSpeed / (dataArray.length - 1)
-            document.getElementById('textPoint').value += "Current Speed " + speed + " Average Speed " + avgSpeed + '\n';
-            // console.log("Current Speed " + speed + " Average Speed " + avgSpeed);
-
         }
 
         //simulate mouse movement on App B
@@ -229,30 +176,44 @@
             dot.style.top = data.y + "px";
             document.getElementById("relativeRect").appendChild(dot);
 
-            for (i = 0; i < rectangles.length; i++) {
-                a = rectangles[i];
-                //checking if the point is inside a rectangle.
-                if (a.contains(data.x, data.y)) {
-                    console.log('inside rectangle' + i)
-                    document.getElementById("rectangle" + i).innerHTML = "inside rectangle" + i;
-                }
 
+            // My idea was to assign each rectangle a random color. Then when the point is inside then the color will be white
+            // for (i = 0; i < rectangles.length; i++) {
+            //     a = rectangles[i];
+
+            //     if (a.contains(data.x, data.y)) {
+            //         console.log('inside rectangle' + i);
+            //         document.getElementById("rectangle" + i).style.backgroundColor = 'white';
+            //         document.getElementById("rectangle" + i).innerHTML = "inside of rectangle" + i;
+
+            //     } else {
+            //         document.getElementById("rectangle" + i).style.backgroundColor = getRandomColor();
+
+            //     }
+            // }
+
+        }
+
+        //calculates speed of the mouse travel
+        function calculateSpeed(secondPosition, firstPosition) {
+            xDistance = (Math.pow(firstPosition.x - secondPosition.x), 2);
+            yDistance = (Math.pow(firstPosition.y - secondPosition.y), 2);
+            distance = Math.sqrt(xDistance + yDistance);
+            timeDifference = (secondPosition.time - firstPosition.time) / 1000;
+            if (timeDifference == 0) {
+                timeDifference = lastSpeed;
             }
+            speed = distance / timeDifference;
+            lastSpeed = speed
+            sumOfSpeed += speed;
+            avgSpeed = sumOfSpeed / (dataArray.length - 1);
+            document.getElementById('textPoint').value += "Current Speed: " + speed.toFixed(2) + " Average Speed: " + avgSpeed.toFixed(2) + '\n';
+            // console.log("Current Speed " + speed + " Average Speed " + avgSpeed);
 
         }
 
-        function drawDots(data) {
-            setTimeout(function() {
-                replay = document.getElementById("textPoint");
-                replay.value += data.x + ' ' + data.y + '\n';
-            }, 1000)
-        }
-
-
-        var delayTime = 2;
-        var MouseMoveDelay = true;
-
-        function setDelay(i, a) {
+        //Redraw mouse points after replay button has been clicked with 10 ms delay
+        function drawPointsWithDelay(i, a) {
             setTimeout(function() {
                 dot = document.createElement('div');
                 dot.className = "dot";
@@ -262,9 +223,10 @@
             }, i * 10);
         }
 
-        function buttonClicked(event) {
+        //after replay button is clicked this method will remove and redraw the points
+        function replayButtonClicked() {
             replay = document.getElementById("textPoint");
-            replay.value += 'pressed\n';
+            replay.value += 'Replay Button Pressed\n';
             var i = 0;
             elementClass = document.getElementsByClassName('dot')
             while (elementClass.length > 0) {
@@ -273,9 +235,36 @@
             count = 0;
             for (i = 0; i < dataArray.length; ++i) {
                 var a = dataArray[i]
-                setDelay(i, a);
+                drawPointsWithDelay(i, a);
             }
         }
+
+        //Code Execution Starts
+
+        //connecting to nodejs server with websocket
+        var socket;
+        socket = io.connect('http://localhost:3000');
+
+        //creating rectangles
+        var rectangles = generateRectangles();
+        //check rectangles lengh
+        //console.log(rectangles.length)
+        drawRectangles(rectangles);
+
+
+
+        //for keeping track of data received from server
+        var dataArray = [];
+        var avgSpeed = 0;
+        var lastSpeed = 0;
+        var sumOfSpeed = 0;
+
+
+        //connection to server and reveiving mouse movement data
+        socket.on('connect', function() {
+            console.log('connected to localhost:3000');
+            socket.on('mouseMovePoint', simulateMouseMove);
+        });
     </script>
 </body>
 
