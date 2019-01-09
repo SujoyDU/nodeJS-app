@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" type="text/javascript"></script>
+    <title>App B</title>
+    <style>
+        #rectangleArea {
+            background: yellow;
+            width: 500px;
+            height: 500px;
+        }
+        
+        #text {
+            display: block;
+            height: 100px;
+            width: 400px;
+        }
+        
+        .dot {
+            width: 4px;
+            height: 4px;
+            background-color: darkred;
+            position: absolute;
+        }
+        
+        .rectangle {
+            border: 3px solid #73AD21
+        }
+    </style>
+</head>
+
+<body>
+    <div id="relativeRect" class="rectangle" onmousemove="log(event)">
+    </div>
+    <script>
+        var styles = `position: relative;
+                      width: 500px;
+                      height: 500px;`
+        document.getElementById("relativeRect").style = styles
+    </script>
+
+    <textarea id="text"></textarea>
+    <input type="button" onclick="text.value=''" value="Clear">
+
+    <script>
+        //to color the random rectangles 
+        function getRandomColor() {
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += (Math.random() * 16 | 0).toString(16);
+            }
+            return color;
+        }
+
+        function Point(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function Rectangle(p1, p2) {
+            //data discription
+            //p1.x = x co-ordinate
+            //p1.y = y co-ordinate
+            //p2.x = width along x axis
+            //p2.y = height along y axis
+            this.p1 = p1;
+            this.p2 = p2;
+
+            //check if a rectangle coitains the mouse point(x,y)
+            this.contains = function(x, y) {
+                return this.p1.x < x && x < this.p2.x &&
+                    this.p1.y < y && y < this.p2.y;
+            }
+        }
+
+        Rectangle.prototype.isInside = function(r) {
+            //check if two rectangles are exclusive or not
+            function check(a, b) {
+                return (
+                    a.p1.x <= b.p1.x && b.p1.x <= a.p2.x && a.p1.y <= b.p1.y && b.p1.y <= a.p2.y ||
+                    a.p1.x <= b.p2.x && b.p2.x <= a.p2.x && a.p1.y <= b.p2.y && b.p2.y <= a.p2.y ||
+                    a.p1.x <= b.p2.x && b.p2.x <= a.p2.x && a.p1.y <= b.p1.y && b.p1.y <= a.p2.y ||
+                    a.p1.x <= b.p1.x && b.p1.x <= a.p2.x && a.p1.y <= b.p2.y && b.p2.y <= a.p2.y
+                );
+            }
+            return check(this, r) || check(r, this);
+        }
+
+        //generate random rectangle in the 500* 500 pixel area
+        function generateRectangles() {
+
+            function p() {
+                return Math.random() * 500 | 0;
+            }
+
+            function s() {
+                return 10 + Math.random() * 100 | 0;
+            }
+
+            var rectangles = []
+            var r, size, x, y, isInside, i, counter = 0;
+
+            while (rectangles.length < 10) {
+                counter = 0;
+                counter++;
+                x = p();
+                y = p();
+                size = s();
+                if (x + size < 500 && y + size < 500) {
+                    r = new Rectangle(new Point(x, y), new Point(x + size, y + size));
+                    isInside = rectangles.some(function(a) {
+                        return a.isInside(r);
+                    });
+                    if (!isInside) rectangles.push(r)
+                }
+            }
+            return rectangles;
+        }
+
+        //draw rectangles according to their size from rectangles array
+        function drawRectangles(rectangles) {
+            rectangles.forEach(function(a, index) {
+                rectElement = document.createElement('div');
+                rectElement.className = "rectangle";
+                rectElement.id = "rectangle" + index;
+                rectElement.style.position = 'absolute';
+                rectElement.style.top = a.p1.x + 0.5 + "px";
+                rectElement.style.left = a.p1.y + 0.5 + "px";
+                rectElement.style.width = a.p2.x - a.p1.x + "px";
+                rectElement.style.height = a.p2.y - a.p1.y + "px";
+
+                //adding new rectangle to the overall 500*500 pixel area
+                document.getElementById("relativeRect").appendChild(rectElement);
+
+            })
+        }
+        var rectangles = generateRectangles();
+        //check rectangles lengh
+        //console.log(rectangles.length)
+
+        drawRectangles(rectangles);
+
+        // function displayMessage(event) {
+        //     console.log(event)
+        // }
+
+        // function cursorEntry(event) {
+        //     console.log("in the div");
+        //     console.log(event.x, event.y)
+
+        //     handleMouseMove(event)
+
+        // }
+
+        // function cursorLeave(event) {
+        //     console.log("out of the div");
+        //     console.log(event.x, event.y)
+        // }
+
+        function log(event) {
+            text.value += event.type + ' [target: ' + event.target.id + ']\n';
+            text.scrollTop = text.scrollHeight;
+        }
+        var socket;
+        //for keeping track of data received from server
+        var dataArray = [];
+        var avgSpeed = 0;
+        var lastSpeed = 0;
+        var sumOfSpeed = 0;
+
+        socket = io.connect('http://localhost:3000');
+
+        //connection to server and reveiving mouse movement data
+        socket.on('connect', function() {
+            console.log('connected to localhost:3000');
+            socket.on('mouseMovePoint', simulateMouseMove);
+        });
+
+        //calculates speed of the mouse travel
+        function calculateSpeed(secondPosition, firstPosition) {
+            xDistance = (Math.pow(firstPosition.x - secondPosition.x), 2);
+            yDistance = (Math.pow(firstPosition.y - secondPosition.y), 2);
+            distance = Math.sqrt(xDistance + yDistance);
+            timeDifference = (secondPosition.time - firstPosition.time) / 1000;
+            if (timeDifference == 0) {
+                timeDifference = lastSpeed;
+            }
+            speed = distance / timeDifference;
+            lastSpeed = speed
+            sumOfSpeed += speed;
+            avgSpeed = sumOfSpeed / (dataArray.length - 1)
+            console.log("Current Speed " + speed + " Average Speed " + avgSpeed);
+
+        }
+
+        //simulate mouse movement on App B
+        function simulateMouseMove(data) {
+            console.log('message from the server:', data);
+
+            dataArray.push(data)
+            if (dataArray.length > 1) {
+                point1 = dataArray[dataArray.length - 1]
+                point2 = dataArray[dataArray.length - 2]
+                calculateSpeed(point1, point2)
+            }
+            dot = document.createElement('div');
+            dot.className = "dot";
+            dot.style.left = data.x + "px";
+            dot.style.top = data.y + "px";
+            document.getElementById("relativeRect").appendChild(dot);
+
+            for (i = 0; i < rectangles.length; i++) {
+                a = rectangles[i];
+                //checking if the point is inside a rectangle.
+                if (a.contains(data.x, data.y)) {
+                    console.log('inside rectangle' + i)
+                    document.getElementById("rectangle" + i).innerHTML = "inside rectangle" + i;
+                }
+
+            }
+
+        }
+    </script>
+</body>
+
+</html>
