@@ -42,7 +42,7 @@
         var MouseMoveDelay = true;
 
         // delay variable to get data 10 times per second
-        var X = 0.1;
+        var delayTime = 0.1;
 
         function setMouseMoveDelayTrue() {
             MouseMoveDelay = true;
@@ -90,7 +90,7 @@
                 dot.style.top = data.y + "px";
                 document.getElementById("rectangleArea").appendChild(dot);
                 MouseMoveDelay = false;
-                setMouseMoveDelayTrueAfterDelay(X * 1000);
+                setMouseMoveDelayTrueAfterDelay(delayTime * 1000);
             }
 
         }
