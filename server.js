@@ -36,4 +36,29 @@ function newConnection(socket) {
         });
         socket.broadcast.emit('mouseMovePoint', data)
     });
+
+    socket.on('replayPoint', function(data) {
+        console.log('new message from App B:', data);
+        var fs = require('fs');
+        var sendArray = []
+        fs.readFile('mouselog.txt', function(err, data) {
+            if (err) throw err;
+            var array = data.toString().split("\n");
+            for (i in array) {
+                console.log(array[i]);
+            }
+            io.sockets.emit('replayData', array)
+
+        });
+
+
+
+        // fs.appendFile('mouselog.txt', data.x + ' ' + data.y + ' ' + data.time + '\n', (err) => {
+        //     if (err) throw err;
+        //     console.log('The data were updated!');
+        // });
+        // socket.broadcast.emit('mouseMovePoint', data)
+    });
+
+
 }

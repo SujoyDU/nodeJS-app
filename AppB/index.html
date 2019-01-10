@@ -177,7 +177,10 @@
             document.getElementById("relativeRect").appendChild(dot);
 
 
-            // My idea was to assign each rectangle a random color. Then when the point is inside then the color will be white
+            // My idea was to assign each rectangle a random color. Then when the point is inside then the color will be white.
+            //But I can not seem to make it work properly
+            //I also tried dispatching mouse events which were unsuccessful as well.
+
             // for (i = 0; i < rectangles.length; i++) {
             //     a = rectangles[i];
 
@@ -225,6 +228,24 @@
 
         //after replay button is clicked this method will remove and redraw the points
         function replayButtonClicked() {
+            socket.emit('replayPoint', 'send data')
+                // replay = document.getElementById("textPoint");
+                // replay.value += 'Replay Button Pressed\n';
+                // var i = 0;
+                // elementClass = document.getElementsByClassName('dot')
+                // while (elementClass.length > 0) {
+                //     elementClass[i].remove()
+                // }
+                // count = 0;
+                // for (i = 0; i < dataArray.length; ++i) {
+                //     var a = dataArray[i]
+                //     drawPointsWithDelay(i, a);
+                // }
+        }
+
+        function drawPointsFaster(arrayPoints) {
+            console.log(arrayPoints)
+
             replay = document.getElementById("textPoint");
             replay.value += 'Replay Button Pressed\n';
             var i = 0;
@@ -233,8 +254,9 @@
                 elementClass[i].remove()
             }
             count = 0;
-            for (i = 0; i < dataArray.length; ++i) {
-                var a = dataArray[i]
+            for (i = 0; i < arrayPoints.length; ++i) {
+                var points = arrayPoints[i].split(' ');
+                var a = new Point(points[0], points[1])
                 drawPointsWithDelay(i, a);
             }
         }
@@ -264,6 +286,7 @@
         socket.on('connect', function() {
             console.log('connected to localhost:3000');
             socket.on('mouseMovePoint', simulateMouseMove);
+            socket.on('replayData', drawPointsFaster)
         });
     </script>
 </body>
