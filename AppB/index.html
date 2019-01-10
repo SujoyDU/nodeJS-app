@@ -55,8 +55,10 @@
     </div>
 
     <div id="replayButton">
-        <input type="button" onclick="replayButtonClicked()" value="Replay">
+        <input type="button" onclick="serverReplayButtonClicked()" value="Request a Replay">
+        <input type="button" onclick="clientReplayButton()" value="Replay Just From this App">
     </div>
+
 
     <script>
         //This method is to color the random rectangles which I intended to use for indicating if a point is inside or not
@@ -111,7 +113,7 @@
             }
 
             function s() {
-                return 10 + Math.random() * 100 | 0;
+                return 20 + Math.random() * 100 | 0;
             }
 
             var rectangles = []
@@ -215,7 +217,7 @@
 
         }
 
-        //Redraw mouse points after replay button has been clicked with 10 ms delay
+        //Redraw mouse points with 10 ms delay
         function drawPointsWithDelay(i, a) {
             setTimeout(function() {
                 dot = document.createElement('div');
@@ -226,28 +228,34 @@
             }, i * 10);
         }
 
-        //after replay button is clicked this method will remove and redraw the points
-        function replayButtonClicked() {
-            socket.emit('replayPoint', 'send data')
-                // replay = document.getElementById("textPoint");
-                // replay.value += 'Replay Button Pressed\n';
-                // var i = 0;
-                // elementClass = document.getElementsByClassName('dot')
-                // while (elementClass.length > 0) {
-                //     elementClass[i].remove()
-                // }
-                // count = 0;
-                // for (i = 0; i < dataArray.length; ++i) {
-                //     var a = dataArray[i]
-                //     drawPointsWithDelay(i, a);
-                // }
+        //after Request a Replay button is clicked this method will request all the points from the server
+        function serverReplayButtonClicked() {
+            socket.emit('replayPoint', 'send data');
+
         }
 
-        function drawPointsFaster(arrayPoints) {
-            console.log(arrayPoints)
-
+        //after Client replay button is clicked, this method will draw only the points that were drawn in this client
+        function clientReplayButton() {
             replay = document.getElementById("textPoint");
             replay.value += 'Replay Button Pressed\n';
+            var i = 0;
+            elementClass = document.getElementsByClassName('dot')
+            while (elementClass.length > 0) {
+                elementClass[i].remove()
+            }
+            count = 0;
+            for (i = 0; i < dataArray.length; ++i) {
+                var a = dataArray[i]
+                drawPointsWithDelay(i, a);
+            }
+
+        }
+
+        //draw requested points from server 10 times faster than App A
+        function drawPointsFaster(arrayPoints) {
+
+            replay = document.getElementById("textPoint");
+            replay.value += 'Request a Replay Button Pressed\n';
             var i = 0;
             elementClass = document.getElementsByClassName('dot')
             while (elementClass.length > 0) {
